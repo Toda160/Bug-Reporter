@@ -1,10 +1,7 @@
 package com.utcn.demo.controller;
 
-import com.utcn.demo.entity.Bug;
 import com.utcn.demo.entity.Comment;
-import com.utcn.demo.service.BugService;
 import com.utcn.demo.service.CommentService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,18 +14,18 @@ import java.util.Map;
 public class CommentController {
     private final CommentService commentService;
 
-    @Autowired
     public CommentController(CommentService commentService) {
         this.commentService = commentService;
     }
 
-    @GetMapping("/bug/{bugId}")
-    public List<Comment> getCommentsByBug(@PathVariable Long bugId) {
-        return commentService.getCommentsByBug(bugId);
+    @GetMapping("/list/bug/{bugId}")
+    public ResponseEntity<List<Comment>> listCommentsByBug(@PathVariable Long bugId) {
+        List<Comment> comments = commentService.getCommentsByBug(bugId);
+        return ResponseEntity.ok(comments);
     }
 
-    @PostMapping
-    public ResponseEntity<Comment> addComment(@RequestBody Map<String, Object> payload) {
+    @PostMapping("/add")
+    public ResponseEntity<Comment> createNewComment(@RequestBody Map<String, Object> payload) {
         Long bugId = Long.valueOf(payload.get("bugId").toString());
         Long authorId = Long.valueOf(payload.get("authorId").toString());
         String text = (String) payload.get("text");
@@ -38,8 +35,8 @@ public class CommentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdComment);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteComment(@PathVariable Long id) {
+    @DeleteMapping("/remove/{id}")
+    public ResponseEntity<Void> removeCommentById(@PathVariable Long id) {
         commentService.deleteComment(id);
         return ResponseEntity.noContent().build();
     }

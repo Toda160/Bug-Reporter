@@ -2,6 +2,7 @@ package com.utcn.demo.controller;
 
 import com.utcn.demo.entity.Ban;
 import com.utcn.demo.service.BanService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,18 +18,20 @@ public class BanController {
         this.banService = banService;
     }
 
-    @GetMapping
-    public List<Ban> getAllBans() {
-        return banService.getAllBans();
+    @GetMapping("/list")
+    public ResponseEntity<List<Ban>> listAllBans() {
+        List<Ban> bans = banService.getAllBans();
+        return ResponseEntity.ok(bans);
     }
 
-    @PostMapping
-    public Ban createBan(@RequestBody Ban ban) {
-        return banService.createBan(ban);
+    @PostMapping("/create")
+    public ResponseEntity<Ban> createNewBan(@RequestBody Ban ban) {
+        Ban createdBan = banService.createBan(ban);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdBan);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBan(@PathVariable Integer id) {
+    @DeleteMapping("/remove/{id}")
+    public ResponseEntity<Void> removeBanById(@PathVariable Integer id) {
         banService.deleteBan(id);
         return ResponseEntity.noContent().build();
     }

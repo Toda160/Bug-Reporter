@@ -2,6 +2,7 @@ package com.utcn.demo.controller;
 
 import com.utcn.demo.entity.Tag;
 import com.utcn.demo.service.TagService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,24 +19,26 @@ public class TagController {
         this.tagService = tagService;
     }
 
-    @GetMapping
-    public List<Tag> getAllTags() {
-        return tagService.getAllTags();
+    @GetMapping("/list")
+    public ResponseEntity<List<Tag>> listAllTags() {
+        List<Tag> tags = tagService.getAllTags();
+        return ResponseEntity.ok(tags);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Tag> getTagById(@PathVariable Integer id) {
+    @GetMapping("/details/{id}")
+    public ResponseEntity<Tag> retrieveTagById(@PathVariable Integer id) {
         Optional<Tag> tag = tagService.getTagById(id);
         return tag.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @PostMapping
-    public Tag createTag(@RequestBody Tag tag) {
-        return tagService.createTag(tag);
+    @PostMapping("/create")
+    public ResponseEntity<Tag> createNewTag(@RequestBody Tag tag) {
+        Tag createdTag = tagService.createTag(tag);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdTag);
     }
 
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Void> deleteTag(@PathVariable Integer id) {
+    @DeleteMapping("/remove/{id}")
+    public ResponseEntity<Void> removeTagById(@PathVariable Integer id) {
         tagService.deleteTag(id);
         return ResponseEntity.noContent().build();
     }

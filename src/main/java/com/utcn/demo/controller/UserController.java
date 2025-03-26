@@ -1,26 +1,45 @@
 package com.utcn.demo.controller;
 
 import com.utcn.demo.entity.User;
-import com.utcn.demo.repository.UserRepository;
 import com.utcn.demo.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
-    private final UserRepository userRepository;
+    private final UserService userService;
 
-    public UserController(UserRepository userRepository) {
-        this.userRepository = userRepository;
+    public UserController(UserService userService) {
+        this.userService = userService;
     }
 
-    @GetMapping("/getAllUsers")
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    @GetMapping("/list")
+    public ResponseEntity<List<User>> listAllUsers() {
+        List<User> users = userService.getAllUsers();
+        return ResponseEntity.ok(users);
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<User> registerNewUser(@RequestBody Map<String, Object> payload) {
+        String username = (String) payload.get("username");
+        String email = (String) payload.get("email");
+        String password = (String) payload.get("password");
+        String role = (String) payload.get("role");
+
+        User createdUser = userService.createUser(username, email, password, role);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
+    }
+
+    // Optional: Endpoint to get user details by ID
+    @GetMapping("/details/{id}")
+    public ResponseEntity<User> retrieveUserById(@PathVariable Long id) {
+        return userService.getUserById(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 }

@@ -2,6 +2,7 @@ package com.utcn.demo.controller;
 
 import com.utcn.demo.entity.ModerationAction;
 import com.utcn.demo.service.ModerationActionService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,18 +18,20 @@ public class ModerationActionController {
         this.moderationActionService = moderationActionService;
     }
 
-    @GetMapping
-    public List<ModerationAction> getAllActions() {
-        return moderationActionService.getAllActions();
+    @GetMapping("/list")
+    public ResponseEntity<List<ModerationAction>> listAllModerationActions() {
+        List<ModerationAction> actions = moderationActionService.getAllActions();
+        return ResponseEntity.ok(actions);
     }
 
-    @PostMapping
-    public ModerationAction createAction(@RequestBody ModerationAction action) {
-        return moderationActionService.createAction(action);
+    @PostMapping("/create")
+    public ResponseEntity<ModerationAction> createNewModerationAction(@RequestBody ModerationAction action) {
+        ModerationAction createdAction = moderationActionService.createAction(action);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdAction);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteAction(@PathVariable Integer id) {
+    @DeleteMapping("/remove/{id}")
+    public ResponseEntity<Void> removeModerationActionById(@PathVariable Integer id) {
         moderationActionService.deleteAction(id);
         return ResponseEntity.noContent().build();
     }

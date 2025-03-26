@@ -2,6 +2,7 @@ package com.utcn.demo.controller;
 
 import com.utcn.demo.entity.BugTag;
 import com.utcn.demo.service.BugTagService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,18 +18,20 @@ public class BugTagController {
         this.bugTagService = bugTagService;
     }
 
-    @GetMapping
-    public List<BugTag> getAllBugTags() {
-        return bugTagService.getAllBugTags();
+    @GetMapping("/list")
+    public ResponseEntity<List<BugTag>> listAllBugTags() {
+        List<BugTag> bugTags = bugTagService.getAllBugTags();
+        return ResponseEntity.ok(bugTags);
     }
 
-    @PostMapping
-    public BugTag createBugTag(@RequestBody BugTag bugTag) {
-        return bugTagService.createBugTag(bugTag);
+    @PostMapping("/create")
+    public ResponseEntity<BugTag> createNewBugTag(@RequestBody BugTag bugTag) {
+        BugTag createdBugTag = bugTagService.createBugTag(bugTag);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdBugTag);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBugTag(@PathVariable Integer id) {
+    @DeleteMapping("/remove/{id}")
+    public ResponseEntity<Void> removeBugTagById(@PathVariable Integer id) {
         bugTagService.deleteBugTag(id);
         return ResponseEntity.noContent().build();
     }
