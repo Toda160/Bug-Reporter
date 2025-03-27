@@ -14,13 +14,18 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-                .csrf().disable() // Dezactivează CSRF pentru testare
+                .csrf().disable()
                 .authorizeRequests()
                 .antMatchers("/api/users/**").permitAll()
-                .antMatchers("/tags/**").permitAll()// Permite accesul la toate sub-rutele
+                .antMatchers("/tags/**").permitAll()
+                .antMatchers("/api/bugs/**").permitAll()
+                .antMatchers("/bug-tags/**").permitAll()
+                .antMatchers("/moderation-actions/**").permitAll()
+                .antMatchers("/api/comments/**").permitAll()
+                .antMatchers("/api/votes/**").permitAll()
+                .antMatchers("/bans/**").permitAll()  // ✅ Adaugă acces liber pentru /bans
                 .anyRequest().authenticated()
                 .and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
     }
-
 }
