@@ -1,16 +1,13 @@
-package com.utcn.demo.Service;
+package com.utcn.demo.service;
 
 import com.utcn.demo.entity.Bug;
 import com.utcn.demo.entity.User;
 import com.utcn.demo.repository.BugRepository;
 import com.utcn.demo.repository.UserRepository;
-import com.utcn.demo.service.BugService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
@@ -30,11 +27,6 @@ class BugServiceTest {
 
     @InjectMocks
     private BugService bugService;
-
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-    }
 
     @Test
     void testGetAllBugs() {
