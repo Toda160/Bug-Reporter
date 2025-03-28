@@ -26,4 +26,13 @@ public class BanService {
     public void deleteBan(Integer id) {
         banRepository.deleteById(id);
     }
+
+    public Ban updateBan(Integer id, Ban updatedBan) {
+        return banRepository.findById(id).map(ban -> {
+            ban.setReason(updatedBan.getReason()); // Actualizează doar motivul banului
+            return banRepository.save(ban);
+        }).orElseThrow(() -> new RuntimeException("Ban not found"));
+    }
+
+
 }

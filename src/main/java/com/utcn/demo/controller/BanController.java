@@ -35,4 +35,11 @@ public class BanController {
         banService.deleteBan(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<Ban> updateBan(@PathVariable Integer id, @RequestBody Ban updatedBan) {
+        Ban ban = banService.updateBan(id, updatedBan);
+        return ResponseEntity.ok(ban);
+    }
+
 }
