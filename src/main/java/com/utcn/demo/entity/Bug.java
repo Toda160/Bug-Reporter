@@ -8,6 +8,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import javax.persistence.*;
 import java.util.Date;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "bugs")
@@ -29,6 +31,9 @@ public class Bug {
     @Temporal(TemporalType.TIMESTAMP)
     @CreationTimestamp
     private Date createdAt;
+
+    @OneToMany(mappedBy = "bug", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<BugTag> bugTags = new HashSet<>();
 
     // Getters, Setters, Constructors
     public Bug() {}
@@ -97,6 +102,14 @@ public class Bug {
 
     public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Set<BugTag> getBugTags() {
+        return bugTags;
+    }
+
+    public void setBugTags(Set<BugTag> bugTags) {
+        this.bugTags = bugTags;
     }
 }
 

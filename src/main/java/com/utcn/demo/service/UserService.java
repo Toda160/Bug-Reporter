@@ -53,9 +53,9 @@ public class UserService {
 
         if (userOptional.isPresent()) {
             User user = userOptional.get();
-            user.setUsername(username);
-            user.setEmail(email);
-            user.setRole(role);
+            if (username != null) user.setUsername(username);
+            if (email != null) user.setEmail(email);
+            if (role != null) user.setRole(role);
 
             // Dacă se trimite o parolă nouă, o criptăm și o actualizăm
             if (password != null && !password.isEmpty()) {

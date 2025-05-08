@@ -1,10 +1,7 @@
 package com.utcn.demo.entity;
 
-import org.hibernate.annotations.CreationTimestamp;
-
 import javax.persistence.*;
-import java.util.Date;
-
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "comments")
@@ -14,34 +11,35 @@ public class Comment {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "bug_id", nullable = false)
-    private Bug bug;
-
-    @ManyToOne
     @JoinColumn(name = "author_id", nullable = false)
     private User author;
 
-    @Column(columnDefinition = "TEXT")
+    @ManyToOne
+    @JoinColumn(name = "bug_id", nullable = false)
+    private Bug bug;
+
+    @Column(nullable = false)
     private String text;
 
+    @Column
     private String image;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    @Temporal(TemporalType.TIMESTAMP)
-    @CreationTimestamp
-    private Date createdAt;
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
 
-    public Comment() {}
+    public Comment() {
+        this.createdAt = LocalDateTime.now();
+    }
 
-    public Comment(Bug bug, User author, String text, String image) {
-        this.bug = bug;
+    public Comment(User author, Bug bug, String text, String image) {
         this.author = author;
+        this.bug = bug;
         this.text = text;
         this.image = image;
+        this.createdAt = LocalDateTime.now();
     }
 
     // Getters and Setters
-
     public Long getId() {
         return id;
     }
@@ -50,20 +48,20 @@ public class Comment {
         this.id = id;
     }
 
-    public Bug getBug() {
-        return bug;
-    }
-
-    public void setBug(Bug bug) {
-        this.bug = bug;
-    }
-
     public User getAuthor() {
         return author;
     }
 
     public void setAuthor(User author) {
         this.author = author;
+    }
+
+    public Bug getBug() {
+        return bug;
+    }
+
+    public void setBug(Bug bug) {
+        this.bug = bug;
     }
 
     public String getText() {
@@ -82,11 +80,11 @@ public class Comment {
         this.image = image;
     }
 
-    public Date getCreatedAt() {
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(Date createdAt) {
+    public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 }
