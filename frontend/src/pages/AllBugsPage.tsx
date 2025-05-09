@@ -193,7 +193,7 @@ const AllBugsPage = () => {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   return (
-    <Box sx={{ minHeight: '100vh', minWidth: '100vw', width: '100vw', height: '100vh', background: 'linear-gradient(135deg, #e3f2fd 0%, #fce4ec 100%)', p: 0 }}>
+    <Box sx={{ width: '100%', p: 0 }}>
       <Box sx={{ width: '100%', mb: 4 }}>
         <Paper elevation={4} sx={{ p: 3, borderRadius: 0, mb: 4, background: 'rgba(255,255,255,0.97)', width: '100%' }}>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2, alignItems: 'center' }}>
@@ -232,7 +232,12 @@ const AllBugsPage = () => {
           </Box>
         </Paper>
       </Box>
-      <Grid container spacing={3} justifyContent="center">
+      <Grid
+        container
+        spacing={3}
+        justifyContent="center"  
+        sx={{ width: '100%' }}       
+       >
         {filteredBugs.map((bug) => (
           <Grid item xs={12} sm={6} md={4} key={bug.id}>
             <Card elevation={4} sx={{ borderRadius: 4, background: 'linear-gradient(120deg, #bbdefb 0%, #f8bbd0 100%)', position: 'relative' }}>
@@ -242,7 +247,29 @@ const AllBugsPage = () => {
                   <Typography variant="h6" fontWeight={600}>{bug.title}</Typography>
                 </Box>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>{bug.description.length > 80 ? bug.description.slice(0, 80) + '...' : bug.description}</Typography>
-                {bug.image && <Box sx={{ mb: 1 }}><img src={bug.image} alt="bug" style={{ maxWidth: '100%', borderRadius: 8 }} /></Box>}
+                {bug.image && (
+  <Box
+    sx={{
+      mb: 1,
+      width: 200,           // container width in pixels
+      height: 150,          // container height in pixels
+      overflow: 'hidden',
+      borderRadius: 1,      // MUI spacing unit ≈8px
+      backgroundColor: '#f0f0f0' // optional neutral bg for letterboxing
+    }}
+  >
+    <img
+      src={bug.image}
+      alt="bug"
+      style={{
+        width: '100%',
+        height: '100%',
+        objectFit: 'contain'  // scales whole image down without cropping
+      }}
+    />
+  </Box>
+)}
+
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
                   {(bug.tags ?? []).map(tag => <Chip key={tag.id} label={tag.name} size="small" />)}
                 </Box>

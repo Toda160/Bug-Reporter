@@ -156,10 +156,28 @@ const CommentSection = ({ bugId }: CommentSectionProps) => {
                   {comment.text}
                 </Typography>
                 {comment.image && (
-                  <Box sx={{ mt: 1 }}>
-                    <img src={comment.image} alt="comment" style={{ maxWidth: '100%', borderRadius: 4 }} />
-                  </Box>
-                )}
+  <Box
+    sx={{
+      mb: 1,
+      width: 200,           
+      height: 150,          
+      overflow: 'hidden',
+      borderRadius: 1,     
+      backgroundColor: '#f0f0f0' 
+    }}
+  >
+    <img
+      src={comment.image}
+      alt="comment"
+      style={{
+        width: '100%',
+        height: '100%',
+        objectFit: 'contain'  
+      }}
+    />
+  </Box>
+)}
+
               </Box>
               {user?.id === comment.author.id && (
                 <Box>

@@ -1,5 +1,6 @@
 package com.utcn.demo.controller;
 
+import com.utcn.demo.dto.TagDTO;
 import com.utcn.demo.entity.Tag;
 import com.utcn.demo.service.TagService;
 import org.springframework.http.HttpStatus;
@@ -8,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/tags")
@@ -20,9 +22,11 @@ public class TagController {
     }
 
     @GetMapping("/list")
-    public ResponseEntity<List<Tag>> listAllTags() {
-        List<Tag> tags = tagService.getAllTags();
-        return ResponseEntity.ok(tags);
+    public ResponseEntity<List<TagDTO>> listAllTags() {
+        List<TagDTO> dtos = tagService.getAllTags().stream()
+                .map(tag -> new TagDTO(tag.getId().intValue(), tag.getName()))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
     }
 
     @GetMapping("/details/{id}")

@@ -62,7 +62,15 @@ function App() {
           <Router>
             <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
               <Navigation />
-              <Box component="main" sx={{ flexGrow: 1 }}>
+              <Box
+   component="main"
+   sx={{
+     flexGrow: 1,
+     minHeight: '100vh',   
+     background:         
+       'linear-gradient(135deg, #e3f2fd 0%, #fce4ec 100%)',
+   }}
+ >
                 <Routes>
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
