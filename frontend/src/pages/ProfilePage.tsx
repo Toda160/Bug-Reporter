@@ -173,14 +173,20 @@ const ProfilePage = () => {
       console.log('Delete cancelled by user');
       return;
     }
+    if (!user?.id) {
+      setError('You must be logged in to delete a bug.');
+      return;
+    }
     try {
-      console.log('Sending DELETE request to:', `/api/bugs/remove/${bugId}`);
-      const response = await api.delete(`/api/bugs/remove/${bugId}`);
+      console.log('Sending DELETE request to:', `/api/bugs/remove/${bugId}?userId=${user.id}`);
+      const response = await api.delete(`/api/bugs/remove/${bugId}?userId=${user.id}`);
       console.log('Delete response:', response);
       if (response.status === 204) {
-        // Refresh bugs
-        const bugsData = await userService.getBugs(id!);
-        setBugs(bugsData);
+        // Filter out the deleted bug from the state
+        setBugs(prevBugs => prevBugs.filter(bug => bug.id !== bugId));
+      } else {
+        // Handle potential non-204 responses, e.g., display an error message
+        setError(`Failed to delete bug: ${response.statusText}`);
       }
     } catch (error) {
       console.error('Error deleting bug:', error);

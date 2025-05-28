@@ -1,16 +1,29 @@
 package com.utcn.demo.repository;
 
-import com.utcn.demo.entity.Bug;
-import com.utcn.demo.entity.Comment;
 import com.utcn.demo.entity.Vote;
+import com.utcn.demo.entity.User; // Import User
+import com.utcn.demo.entity.Bug; // Import Bug
+import com.utcn.demo.entity.Comment; // Import Comment
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional; // Import Transactional
 
 import java.util.List;
+import java.util.Optional;
 
-@Repository
 public interface VoteRepository extends JpaRepository<Vote, Long> {
+    Optional<Vote> findByUserAndComment(User user, Comment comment);
+    Optional<Vote> findByUserAndBug(User user, Bug bug); // Assuming voting directly on bugs is possible
+
     List<Vote> findByBug(Bug bug);
     List<Vote> findByComment(Comment comment);
-}
 
+    // Add these methods for deletion:
+    @Transactional // Deletion operations should be transactional
+    void deleteByCommentIdIn(List<Long> commentIds);
+
+    @Transactional // Deletion operations should be transactional
+    void deleteByBugId(Long bugId);
+
+     @Transactional
+     void deleteByCommentId(Long commentId);
+}

@@ -1,4 +1,4 @@
-import { Box, Button, Typography, Paper, Grid, Card, CardContent, Avatar, Select, MenuItem, FormControl, InputLabel, Chip, List, ListItem, ListItemText } from '@mui/material';
+import { Box, Button, Typography, Paper, Grid, Card, CardContent, Avatar, Select, MenuItem, FormControl, InputLabel, Chip, List, ListItem, ListItemText, CircularProgress } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import BugReportIcon from '@mui/icons-material/BugReport';
@@ -36,11 +36,22 @@ const Dashboard = () => {
   const [bugs, setBugs] = useState<Bug[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [selectedTag, setSelectedTag] = useState<number | ''>('');
+  const [userBugCount, setUserBugCount] = useState<number | null>(null);
+  const [loadingUserBugCount, setLoadingUserBugCount] = useState<boolean>(true);
+  const [userCommentCount, setUserCommentCount] = useState<number | null>(null);
+  const [loadingUserCommentCount, setLoadingUserCommentCount] = useState<boolean>(true);
+  const [userVoteCount, setUserVoteCount] = useState<number | null>(null);
+  const [loadingUserVoteCount, setLoadingUserVoteCount] = useState<boolean>(true);
 
   useEffect(() => {
     fetchBugs();
     fetchTags();
-  }, []);
+    if (user) {
+      fetchUserBugCount(user.id);
+      fetchUserCommentCount(user.id);
+      fetchUserVoteCount(user.id);
+    }
+  }, [user]);
 
   const fetchBugs = async () => {
     const res = await fetch('http://localhost:8080/api/bugs/list');
@@ -60,6 +71,54 @@ const Dashboard = () => {
       }
     } catch (err) {
       setTags([]);
+    }
+  };
+
+  const fetchUserBugCount = async (userId: string) => {
+    setLoadingUserBugCount(true);
+    try {
+      // Assuming an endpoint /api/user/bugs/count exists that returns { count: number }
+      const res = await fetch(`/api/user/bugs/count?userId=${userId}`);
+      if (!res.ok) throw new Error('Failed to fetch user bug count');
+      const data = await res.json();
+      setUserBugCount(data.count);
+    } catch (err) {
+      console.error("Error fetching user bug count:", err);
+      setUserBugCount(null); // Or set to 0, depending on desired behavior on error
+    } finally {
+      setLoadingUserBugCount(false);
+    }
+  };
+
+  const fetchUserCommentCount = async (userId: string) => {
+    setLoadingUserCommentCount(true);
+    try {
+      // Assuming an endpoint /api/user/comments/count exists that returns { count: number }
+      const res = await fetch(`/api/user/comments/count?userId=${userId}`);
+      if (!res.ok) throw new Error('Failed to fetch user comment count');
+      const data = await res.json();
+      setUserCommentCount(data.count);
+    } catch (err) {
+      console.error("Error fetching user comment count:", err);
+      setUserCommentCount(null);
+    } finally {
+      setLoadingUserCommentCount(false);
+    }
+  };
+
+  const fetchUserVoteCount = async (userId: string) => {
+    setLoadingUserVoteCount(true);
+    try {
+      // Assuming an endpoint /api/user/votes/count exists that returns { count: number }
+      const res = await fetch(`/api/user/votes/count?userId=${userId}`);
+      if (!res.ok) throw new Error('Failed to fetch user vote count');
+      const data = await res.json();
+      setUserVoteCount(data.count);
+    } catch (err) {
+      console.error("Error fetching user vote count:", err);
+      setUserVoteCount(null);
+    } finally {
+      setLoadingUserVoteCount(false);
     }
   };
 
@@ -101,55 +160,41 @@ const Dashboard = () => {
                     <Card elevation={2} sx={{ borderRadius: 3, py: 2, px: 1, background: 'linear-gradient(120deg, #bbdefb 0%, #f8bbd0 100%)' }}>
                       <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                         {stat.icon}
-                        <Typography variant="h5" fontWeight={600}>{stat.value}</Typography>
+                        <Typography variant="h5" fontWeight={600}>
+                          {stat.label === 'Bugs Reported' ? (
+                            loadingUserBugCount ? (
+                              <CircularProgress size={20} />
+                            ) : userBugCount !== null ? (
+                              userBugCount
+                            ) : (
+                              '-'
+                            )
+                          ) : stat.label === 'Comments' ? (
+                            loadingUserCommentCount ? (
+                              <CircularProgress size={20} />
+                            ) : userCommentCount !== null ? (
+                              userCommentCount
+                            ) : (
+                              '-'
+                            )
+                          ) : stat.label === 'Votes' ? (
+                            loadingUserVoteCount ? (
+                              <CircularProgress size={20} />
+                            ) : userVoteCount !== null ? (
+                              userVoteCount
+                            ) : (
+                              '-'
+                            )
+                          ) : (
+                            stat.value // Fallback for any other stats
+                          )}
+                        </Typography>
                         <Typography variant="body2" color="text.secondary">{stat.label}</Typography>
                       </CardContent>
                     </Card>
                   </Grid>
                 ))}
               </Grid>
-              <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>
-                <FormControl sx={{ minWidth: 180 }}>
-                  <InputLabel>Tag</InputLabel>
-                  <Select
-                    value={selectedTag}
-                    label="Tag"
-                    onChange={e => setSelectedTag(e.target.value as number)}
-                  >
-                    <MenuItem value="">All</MenuItem>
-                    {(tags ?? []).map(tag => (
-                      <MenuItem key={tag.id} value={tag.id}>{tag.name}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
-              <MuiBox sx={{ mt: 4 }}>
-                <Typography variant="h6" align="center" gutterBottom>Bugs</Typography>
-                <List>
-                  {filteredBugs.map(bug => (
-                    <ListItem key={bug.id} alignItems="flex-start">
-                      <ListItemText
-                        primary={bug.title}
-                        secondary={
-                          <>
-                            <Typography component="span" variant="body2" color="text.primary">
-                              {bug.description.length > 80 ? bug.description.slice(0, 80) + '...' : bug.description}
-                            </Typography>
-                            <Box sx={{ mt: 1 }}>
-                              {(bug.tags ?? []).map(tag => <Chip key={tag.id} label={tag.name} size="small" sx={{ mr: 0.5 }} />)}
-                            </Box>
-                          </>
-                        }
-                      />
-                    </ListItem>
-                  ))}
-                  {filteredBugs.length === 0 && (
-                    <ListItem>
-                      <ListItemText primary="No bugs found for this tag." />
-                    </ListItem>
-                  )}
-                </List>
-              </MuiBox>
             </>
           )}
         </Paper>

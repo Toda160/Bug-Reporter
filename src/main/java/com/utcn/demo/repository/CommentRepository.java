@@ -10,4 +10,8 @@ import java.util.List;
 public interface CommentRepository extends JpaRepository<Comment, Long> {
     List<Comment> findByBugIdOrderByCreatedAtDesc(Long bugId);
     void deleteByAuthorIdAndId(Long authorId, Long commentId);
+
+    long countByBugId(Long bugId);
+
+    void deleteByBugId(Long id);
 }

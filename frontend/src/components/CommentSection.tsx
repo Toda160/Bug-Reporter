@@ -20,6 +20,10 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloseIcon from '@mui/icons-material/Close';
 import api from '../services/api';
+import ThumbUpIcon from '@mui/icons-material/ThumbUp';
+import ThumbDownIcon from '@mui/icons-material/ThumbDown';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { voteService } from '../services/api';
 
 interface Comment {
   id: number;
@@ -30,13 +34,18 @@ interface Comment {
     id: string;
     username: string;
   };
+  voteCount?: number;
+  accepted?: boolean;
 }
 
 interface CommentSectionProps {
   bugId: number;
+  bugStatus: string;
+  bugAuthorId: string;
+  currentUserId?: string;
 }
 
-const CommentSection = ({ bugId }: CommentSectionProps) => {
+const CommentSection = ({ bugId, bugStatus, bugAuthorId, currentUserId }: CommentSectionProps) => {
   const { user } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState({ text: '', image: '' });
@@ -48,6 +57,10 @@ const CommentSection = ({ bugId }: CommentSectionProps) => {
   useEffect(() => {
     fetchComments();
   }, [bugId]);
+
+  useEffect(() => {
+    console.log('currentUserId:', currentUserId, 'bugAuthorId:', bugAuthorId);
+  }, [currentUserId, bugAuthorId]);
 
   const fetchComments = async () => {
     try {
@@ -105,6 +118,26 @@ const CommentSection = ({ bugId }: CommentSectionProps) => {
     }
   };
 
+  const handleVoteComment = async (commentId: number, voteType: 'upvote' | 'downvote') => {
+    if (!user) return;
+    try {
+      await voteService.voteComment(commentId, user.id, voteType);
+      fetchComments();
+    } catch (err) {
+      // Optionally show error
+    }
+  };
+
+  const handleAcceptComment = async (commentId: number) => {
+    if (!user) return;
+    try {
+      await voteService.acceptComment(bugId, commentId, user.id);
+      fetchComments();
+    } catch (err) {
+      // Optionally show error
+    }
+  };
+
   const openEditDialog = (comment: Comment) => {
     setEditComment(comment);
     setEditForm({ text: comment.text, image: comment.image || '' });
@@ -118,39 +151,44 @@ const CommentSection = ({ bugId }: CommentSectionProps) => {
       </Typography>
 
       {/* New Comment Form */}
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <form onSubmit={handleSubmitComment}>
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
-            label="Add a comment"
-            value={newComment.text}
-            onChange={(e) => setNewComment(prev => ({ ...prev, text: e.target.value }))}
-            margin="normal"
-            required
-          />
-          <TextField
-            fullWidth
-            label="Image URL (optional)"
-            value={newComment.image}
-            onChange={(e) => setNewComment(prev => ({ ...prev, image: e.target.value }))}
-            margin="normal"
-          />
-          <Button type="submit" variant="contained" sx={{ mt: 2 }}>
-            Post Comment
-          </Button>
-        </form>
-      </Paper>
+      {bugStatus !== 'Solved' && (
+        <Paper sx={{ p: 2, mb: 3 }}>
+          <form onSubmit={handleSubmitComment}>
+            <TextField
+              fullWidth
+              multiline
+              rows={3}
+              label="Add a comment"
+              value={newComment.text}
+              onChange={(e) => setNewComment(prev => ({ ...prev, text: e.target.value }))}
+              margin="normal"
+              required
+            />
+            <TextField
+              fullWidth
+              label="Image URL (optional)"
+              value={newComment.image}
+              onChange={(e) => setNewComment(prev => ({ ...prev, image: e.target.value }))}
+              margin="normal"
+            />
+            <Button type="submit" variant="contained" sx={{ mt: 2 }}>
+              Post Comment
+            </Button>
+          </form>
+        </Paper>
+      )}
 
       {/* Comments List */}
       {comments.map((comment) => (
-        <Card key={comment.id} sx={{ mb: 2 }}>
+        <Card key={comment.id} sx={{ mb: 2, background: comment.accepted ? '#e6ffe6' : undefined }}>
           <CardContent>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <Box>
                 <Typography variant="subtitle2" color="text.secondary">
                   {comment.author.username} • {new Date(comment.createdAt).toLocaleString()}
+                  {comment.accepted && (
+                    <CheckCircleIcon color="success" sx={{ ml: 1 }} />
+                  )}
                 </Typography>
                 <Typography variant="body1" sx={{ mt: 1 }}>
                   {comment.text}
@@ -177,7 +215,19 @@ const CommentSection = ({ bugId }: CommentSectionProps) => {
     />
   </Box>
 )}
-
+                {/* Voting UI for comment */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+                  <Typography variant="body2">{comment.voteCount ?? 0}</Typography>
+                  <IconButton disabled={!user || user.id === comment.author.id} onClick={() => handleVoteComment(comment.id, 'upvote')}><ThumbUpIcon /></IconButton>
+                  <IconButton disabled={!user || user.id === comment.author.id} onClick={() => handleVoteComment(comment.id, 'downvote')}><ThumbDownIcon /></IconButton>
+                  {/* Accept button for bug creator */}
+                  {user && currentUserId === bugAuthorId && bugStatus !== 'Solved' && !comment.accepted && (
+                    <Button size="small" color="success" onClick={() => handleAcceptComment(comment.id)} sx={{ ml: 2 }}>
+                      Accept
+                    </Button>
+                  )}
+                  {comment.accepted && <Typography color="success.main" sx={{ ml: 2 }}>Accepted</Typography>}
+                </Box>
               </Box>
               {user?.id === comment.author.id && (
                 <Box>

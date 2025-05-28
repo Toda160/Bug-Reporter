@@ -1,15 +1,39 @@
 package com.utcn.demo.dto;
 
-import java.util.Date;
-import java.util.List;
-
 public class BugDTO {
-    public Long id;
-    public String title;
-    public String description;
-    public String image;
-    public String status;
-    public Date createdAt;
-    public UserDTO author;
-    public List<TagDTO> tags;
-} 
+    private Long id;
+    private String title;
+    private String description;
+    private String image;
+    private String status;
+    private String createdAt;
+    private AuthorDTO author;
+
+    // Getters and setters
+
+    public static class AuthorDTO {
+        private Long id;
+        private String username;
+
+        // Getters and setters
+        public Long getId() { return id; }
+        public void setId(Long id) { this.id = id; }
+        public String getUsername() { return username; }
+        public void setUsername(String username) { this.username = username; }
+    }
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+    public String getImage() { return image; }
+    public void setImage(String image) { this.image = image; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+    public String getCreatedAt() { return createdAt; }
+    public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
+    public AuthorDTO getAuthor() { return author; }
+    public void setAuthor(AuthorDTO author) { this.author = author; }
+}

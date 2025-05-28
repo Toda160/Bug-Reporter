@@ -74,4 +74,20 @@ export const userService = {
   },
 };
 
+export const voteService = {
+  voteBug: async (bugId: number, userId: string, voteType: 'upvote' | 'downvote') => {
+    return api.post(`/api/votes/bug/${bugId}`, { userId, voteType });
+  },
+  voteComment: async (commentId: number, userId: string, voteType: 'upvote' | 'downvote') => {
+    return api.post(`/api/votes/create`, {
+      userId,
+      commentId,
+      voteType: voteType === 'upvote' ? 'upvote' : 'downvote'
+    });
+  },
+  acceptComment: async (bugId: number, commentId: number, userId: string) => {
+    return api.post(`/api/bugs/${bugId}/accept/${commentId}`, { userId });
+  }
+};
+
 export default api; 

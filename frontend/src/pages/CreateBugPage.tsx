@@ -11,7 +11,7 @@ interface Tag {
 const CreateBugPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [form, setForm] = useState({ title: '', description: '', image: '', status: 'Received', tags: [] as number[] });
+  const [form, setForm] = useState({ title: '', description: '', image: '', tags: [] as number[] });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [tags, setTags] = useState<Tag[]>([]);
@@ -52,7 +52,6 @@ const CreateBugPage = () => {
           title: form.title,
           description: form.description,
           image: form.image,
-          status: form.status,
           tagIds: form.tags
         })
       });
@@ -99,19 +98,6 @@ const CreateBugPage = () => {
             onChange={handleChange}
             margin="normal"
           />
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Status</InputLabel>
-            <Select
-              name="status"
-              value={form.status}
-              label="Status"
-              onChange={handleChange}
-            >
-              <MenuItem value="Received">Received</MenuItem>
-              <MenuItem value="In progress">In progress</MenuItem>
-              <MenuItem value="Solved">Solved</MenuItem>
-            </Select>
-          </FormControl>
           <FormControl fullWidth margin="normal">
             <InputLabel>Tags</InputLabel>
             <Select

@@ -1,15 +1,16 @@
 package com.utcn.demo.controller;
 
+import com.utcn.demo.dto.BugDTO;
 import com.utcn.demo.entity.Bug;
 import com.utcn.demo.service.BugService;
-import com.utcn.demo.dto.BugDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Optional;
+import java.util.HashMap; // Import HashMap
 
 @RestController
 @RequestMapping("/api/bugs")
@@ -21,18 +22,34 @@ public class BugController {
     }
 
     @GetMapping("/list")
-    public ResponseEntity<List<BugDTO>> listAllBugs() {
-        List<BugDTO> bugDTOs = bugService.getAllBugs().stream()
-            .map(bugService::toDTO)
-            .collect(Collectors.toList());
-        return ResponseEntity.ok(bugDTOs);
+    public ResponseEntity<List<Bug>> listAllBugs() {
+        List<Bug> bugs = bugService.getAllBugs();
+        return ResponseEntity.ok(bugs);
     }
 
     @GetMapping("/details/{id}")
-    public ResponseEntity<Bug> retrieveBugById(@PathVariable Long id) {
-        return bugService.getBugById(id)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<BugDTO> retrieveBugById(@PathVariable Long id) {
+        Optional<Bug> bugOpt = bugService.getBugById(id);
+        if (bugOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        Bug bug = bugOpt.get();
+
+        // Map Bug entity to BugDTO
+        BugDTO dto = new BugDTO();
+        dto.setId(bug.getId());
+        dto.setTitle(bug.getTitle());
+        dto.setDescription(bug.getDescription());
+        dto.setImage(bug.getImage());
+        dto.setStatus(bug.getStatus());
+        dto.setCreatedAt(bug.getCreatedAt().toString());
+
+        BugDTO.AuthorDTO authorDTO = new BugDTO.AuthorDTO();
+        authorDTO.setId(bug.getAuthor().getId());
+        authorDTO.setUsername(bug.getAuthor().getUsername());
+        dto.setAuthor(authorDTO);
+
+        return ResponseEntity.ok(dto);
     }
 
     @PostMapping("/report")
@@ -51,9 +68,20 @@ public class BugController {
     }
 
     @DeleteMapping("/remove/{id}")
-    public ResponseEntity<Void> removeBugById(@PathVariable Long id) {
-        bugService.deleteBug(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> removeBugById(@PathVariable Long id, @RequestParam Long userId) { // Changed return type to <?>
+        try {
+            bugService.deleteBug(id, userId);
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            Map<String, String> responseBody = new HashMap<>(); // Use HashMap
+            if (e.getMessage() != null && e.getMessage().equals("Only the bug creator can delete their bug")) {
+                responseBody.put("error", e.getMessage()); // Include message for forbidden
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(responseBody);
+            }
+            // Include the actual exception message for bad requests
+            responseBody.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseBody);
+        }
     }
 
     @GetMapping("/user/{userId}")
@@ -69,6 +97,24 @@ public class BugController {
             return ResponseEntity.ok(updatedBug);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PostMapping("/{bugId}/accept/{commentId}")
+    public ResponseEntity<?> acceptComment(@PathVariable Long bugId, @PathVariable Long commentId,
+                                           @RequestBody Map<String, Object> payload) {
+        try {
+            Long userId = Long.valueOf(payload.get("userId").toString());
+            Bug updatedBug = bugService.acceptComment(bugId, commentId, userId);
+            return ResponseEntity.ok(updatedBug);
+        } catch (RuntimeException e) {
+            Map<String, String> response = new HashMap<>();
+            if (e.getMessage().equals("Only the bug creator can accept a comment")) {
+                response.put("error", "Only the bug creator can accept a comment");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 }

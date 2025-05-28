@@ -27,4 +27,11 @@ public class VoteController {
         Vote createdVote = voteService.addVote(userId, bugId, commentId, voteType);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdVote);
     }
+
+    @PostMapping("/comment/{commentId}/like")
+    public ResponseEntity<String> likeComment(@PathVariable Long commentId, @RequestBody Map<String, Object> payload) {
+        Long userId = Long.valueOf(payload.get("userId").toString());
+        voteService.likeComment(userId, commentId);
+        return ResponseEntity.ok("Comment liked successfully");
+    }
 }

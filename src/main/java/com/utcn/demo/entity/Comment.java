@@ -1,5 +1,7 @@
 package com.utcn.demo.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
@@ -16,6 +18,7 @@ public class Comment {
 
     @ManyToOne
     @JoinColumn(name = "bug_id", nullable = false)
+    @JsonIgnore
     private Bug bug;
 
     @Column(nullable = false)
@@ -26,6 +29,13 @@ public class Comment {
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
+
+    @Transient
+    private Integer voteCount;
+
+    // New field to mark if the comment is accepted
+    @Column(nullable = false)
+    private boolean isAccepted = false;
 
     public Comment() {
         this.createdAt = LocalDateTime.now();
@@ -39,52 +49,22 @@ public class Comment {
         this.createdAt = LocalDateTime.now();
     }
 
-    // Getters and Setters
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public User getAuthor() { return author; }
+    public void setAuthor(User author) { this.author = author; }
+    public Bug getBug() { return bug; }
+    public void setBug(Bug bug) { this.bug = bug; }
+    public String getText() { return text; }
+    public void setText(String text) { this.text = text; }
+    public String getImage() { return image; }
+    public void setImage(String image) { this.image = image; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public Integer getVoteCount() { return voteCount != null ? voteCount : 0; }
+    public void setVoteCount(Integer voteCount) { this.voteCount = voteCount; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public User getAuthor() {
-        return author;
-    }
-
-    public void setAuthor(User author) {
-        this.author = author;
-    }
-
-    public Bug getBug() {
-        return bug;
-    }
-
-    public void setBug(Bug bug) {
-        this.bug = bug;
-    }
-
-    public String getText() {
-        return text;
-    }
-
-    public void setText(String text) {
-        this.text = text;
-    }
-
-    public String getImage() {
-        return image;
-    }
-
-    public void setImage(String image) {
-        this.image = image;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
+    // Getter and Setter for isAccepted
+    public boolean isAccepted() { return isAccepted; }
+    public void setAccepted(boolean accepted) { isAccepted = accepted; }
 }

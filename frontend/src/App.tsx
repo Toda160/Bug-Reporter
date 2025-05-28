@@ -66,7 +66,8 @@ function App() {
    component="main"
    sx={{
      flexGrow: 1,
-     minHeight: '100vh',   
+     minHeight: 'calc(100vh - 64px)',
+     width: '100%',
      background:         
        'linear-gradient(135deg, #e3f2fd 0%, #fce4ec 100%)',
    }}

@@ -2,6 +2,7 @@ package com.utcn.demo.controller;
 
 import com.utcn.demo.entity.Comment;
 import com.utcn.demo.service.CommentService;
+import com.utcn.demo.service.VoteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +14,8 @@ import java.util.Map;
 @RequestMapping("/api/comments")
 public class CommentController {
     private final CommentService commentService;
+    @Autowired
+    private VoteService voteService;
 
     @Autowired
     public CommentController(CommentService commentService) {
@@ -51,5 +54,19 @@ public class CommentController {
             @RequestParam Long authorId) {
         commentService.deleteComment(id, authorId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/like/{commentId}")
+    public ResponseEntity<String> likeComment(@PathVariable Long commentId, @RequestBody Map<String, Object> payload) {
+        Long userId = Long.valueOf(payload.get("userId").toString());
+        voteService.likeComment(userId, commentId);
+        return ResponseEntity.ok("Comment liked successfully");
+    }
+
+    @PostMapping("/dislike/{commentId}")
+    public ResponseEntity<String> dislikeComment(@PathVariable Long commentId, @RequestBody Map<String, Object> payload) {
+        Long userId = Long.valueOf(payload.get("userId").toString());
+        voteService.dislikeComment(userId, commentId);
+        return ResponseEntity.ok("Comment disliked successfully");
     }
 }

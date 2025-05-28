@@ -43,7 +43,6 @@ const AllBugsPage = () => {
     title: '',
     description: '',
     image: '',
-    status: 'Received',
     tags: [] as number[],
   });
   const [bugError, setBugError] = useState('');
@@ -90,7 +89,7 @@ const AllBugsPage = () => {
     fetchTags();
   };
 
-  const handleBugFormChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
+  const handleBugFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | { target: { name: string; value: unknown } }) => {
     const { name, value } = e.target;
     setBugForm(prev => ({ ...prev, [name as string]: value }));
   };
@@ -112,13 +111,12 @@ const AllBugsPage = () => {
           title: bugForm.title,
           description: bugForm.description,
           image: bugForm.image,
-          status: bugForm.status,
           tagIds: bugForm.tags
         })
       });
       if (!res.ok) throw new Error('Failed to create bug');
       setBugDialogOpen(false);
-      setBugForm({ title: '', description: '', image: '', status: 'Received', tags: [] });
+      setBugForm({ title: '', description: '', image: '', tags: [] });
       fetchBugs();
     } catch (err: any) {
       setBugError(err.message);
@@ -171,10 +169,16 @@ const AllBugsPage = () => {
     if (!window.confirm('Are you sure you want to delete this bug?')) {
       return;
     }
+    if (!user?.id) {
+      setBugError('You must be logged in to delete a bug.');
+      return;
+    }
     try {
-      const response = await api.delete(`/api/bugs/remove/${bugId}`);
+      const response = await api.delete(`/api/bugs/remove/${bugId}?userId=${user.id}`);
       if (response.status === 204) {
         fetchBugs();
+      } else {
+        setBugError(`Failed to delete bug: ${response.statusText}`);
       }
     } catch (error) {
       console.error('Error deleting bug:', error);
@@ -193,10 +197,10 @@ const AllBugsPage = () => {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   return (
-    <Box sx={{ width: '100%', p: 0 }}>
+    <Box>
       <Box sx={{ width: '100%', mb: 4 }}>
-        <Paper elevation={4} sx={{ p: 3, borderRadius: 0, mb: 4, background: 'rgba(255,255,255,0.97)', width: '100%' }}>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2, alignItems: 'center' }}>
+        <Paper elevation={4} sx={{ p: 2, borderRadius: 0, mb: 3, background: 'rgba(255,255,255,0.97)' }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 1, alignItems: 'center' }}>
             <TextField
               label="Search by title"
               value={search}
@@ -235,8 +239,7 @@ const AllBugsPage = () => {
       <Grid
         container
         spacing={3}
-        justifyContent="center"  
-        sx={{ width: '100%' }}       
+        justifyContent="center"
        >
         {filteredBugs.map((bug) => (
           <Grid item xs={12} sm={6} md={4} key={bug.id}>
@@ -251,8 +254,8 @@ const AllBugsPage = () => {
   <Box
     sx={{
       mb: 1,
-      width: 200,           // container width in pixels
-      height: 150,          // container height in pixels
+      width: '100%',           
+      maxHeight: 150,          
       overflow: 'hidden',
       borderRadius: 1,      // MUI spacing unit ≈8px
       backgroundColor: '#f0f0f0' // optional neutral bg for letterboxing
@@ -308,7 +311,12 @@ const AllBugsPage = () => {
                 </Box>
                 {expandedBugId === bug.id && (
                   <Box sx={{ mt: 2 }}>
-                    <CommentSection bugId={bug.id} />
+                    <CommentSection 
+                      bugId={bug.id} 
+                      bugStatus={bug.status}
+                      bugAuthorId={bug.author.id}
+                      currentUserId={user?.id}
+                    />
                   </Box>
                 )}
               </CardContent>
@@ -371,19 +379,6 @@ const AllBugsPage = () => {
               onChange={handleBugFormChange}
               margin="normal"
             />
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Status</InputLabel>
-              <Select
-                name="status"
-                value={bugForm.status}
-                label="Status"
-                onChange={handleBugFormChange}
-              >
-                <MenuItem value="Received">Received</MenuItem>
-                <MenuItem value="In progress">In progress</MenuItem>
-                <MenuItem value="Solved">Solved</MenuItem>
-              </Select>
-            </FormControl>
             <FormControl fullWidth margin="normal">
               <InputLabel>Tags</InputLabel>
               <Select
@@ -449,19 +444,6 @@ const AllBugsPage = () => {
               onChange={handleEditTextFieldChange}
               margin="normal"
             />
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Status</InputLabel>
-              <Select
-                name="status"
-                value={editForm.status}
-                label="Status"
-                onChange={handleEditSelectChange}
-              >
-                <MenuItem value="Received">Received</MenuItem>
-                <MenuItem value="In progress">In progress</MenuItem>
-                <MenuItem value="Solved">Solved</MenuItem>
-              </Select>
-            </FormControl>
           </form>
         </DialogContent>
         <DialogActions>
