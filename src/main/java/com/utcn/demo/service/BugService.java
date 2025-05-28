@@ -25,7 +25,7 @@ public class BugService {
     private final UserRepository userRepository;
     private final TagRepository tagRepository;
     private final BugTagRepository bugTagRepository; // Inject BugTagRepository
-    private final VoteService voteService; // Assuming VoteService handles vote deletion
+    private final VoteService voteService; // Assuming VoteService handles vote deletion and retrieval
     private final CommentService commentService;
     private final CommentRepository commentRepository; // Assuming CommentRepository handles comment deletion
 
@@ -156,5 +156,14 @@ public class BugService {
         bug.setAcceptedComment(comment);
         bug.setStatus("Solved");
         return bugRepository.save(bug);
+    }
+
+    public long getBugCount() {
+        return bugRepository.count();
+    }
+
+    // Added method to get bug vote count by calling VoteService
+    public int getVoteCountForBug(Long bugId) {
+        return voteService.getVoteCountForBug(bugId);
     }
 }

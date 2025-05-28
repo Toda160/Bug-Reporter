@@ -56,6 +56,12 @@ public class CommentController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/count")
+    public ResponseEntity<Long> getCommentCount() {
+        long count = commentService.getCommentCount();
+        return ResponseEntity.ok(count);
+    }
+
     @PostMapping("/like/{commentId}")
     public ResponseEntity<String> likeComment(@PathVariable Long commentId, @RequestBody Map<String, Object> payload) {
         Long userId = Long.valueOf(payload.get("userId").toString());

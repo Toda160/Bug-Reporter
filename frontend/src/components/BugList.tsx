@@ -10,7 +10,7 @@ interface Bug {
   description: string;
   status: string;
   createdAt: string;
-  author: { username: string };
+  author: { username: string; score: number };
 }
 
 const BugList = () => {
@@ -75,7 +75,7 @@ const BugList = () => {
                   {bug.description.length > 80 ? bug.description.slice(0, 80) + '...' : bug.description}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Status: {bug.status} | Author: {bug.author?.username}
+                  Status: {bug.status} | Author: {bug.author?.username} (Score: {bug.author?.score?.toFixed(1) || 0})
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   Created: {new Date(bug.createdAt).toLocaleString()}

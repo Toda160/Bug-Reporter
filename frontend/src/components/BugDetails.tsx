@@ -16,7 +16,7 @@ interface Bug {
   description: string;
   status: string;
   createdAt: string;
-  author: { id: string; username: string };
+  author: { id: string; username: string; score: number };
   image?: string;
   voteCount?: number;
 }
@@ -77,7 +77,7 @@ const BugDetails = () => {
               <Box>
                 <Typography variant="h5" fontWeight={700}>{bug.title}</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Status: {bug.status} | Author: {bug.author?.username} | Created: {new Date(bug.createdAt).toLocaleString()}
+                  Status: {bug.status} | Author: {bug.author?.username} (Score: {bug.author?.score?.toFixed(1) || 0})
                 </Typography>
               </Box>
             </Box>

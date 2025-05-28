@@ -28,14 +28,11 @@ import { voteService } from '../services/api';
 interface Comment {
   id: number;
   text: string;
-  image?: string;
+  author: { id: string; username: string; score: number };
   createdAt: string;
-  author: {
-    id: string;
-    username: string;
-  };
-  voteCount?: number;
+  image?: string;
   accepted?: boolean;
+  voteCount?: number;
 }
 
 interface CommentSectionProps {
@@ -185,7 +182,7 @@ const CommentSection = ({ bugId, bugStatus, bugAuthorId, currentUserId }: Commen
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <Box>
                 <Typography variant="subtitle2" color="text.secondary">
-                  {comment.author.username} • {new Date(comment.createdAt).toLocaleString()}
+                  {comment.author.username} (Score: {comment.author.score?.toFixed(1) || 0}) • {new Date(comment.createdAt).toLocaleString()}
                   {comment.accepted && (
                     <CheckCircleIcon color="success" sx={{ ml: 1 }} />
                   )}

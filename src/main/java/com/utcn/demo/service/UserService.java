@@ -4,6 +4,7 @@ import com.utcn.demo.entity.User;
 import com.utcn.demo.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,12 +23,14 @@ public class UserService {
         return userRepository.findAll();
     }
 
+    @Transactional
     public User createUser(String username, String email, String password, String role) {
         User newUser = new User();
         newUser.setUsername(username);
         newUser.setEmail(email);
         newUser.setPassword(passwordEncoder.encode(password)); // Criptăm parola
         newUser.setRole(role);
+        newUser.setScore(0.0); // Initialize score to 0.0 for new users
 
         return userRepository.save(newUser);
     }
@@ -40,6 +43,7 @@ public class UserService {
         return userRepository.findByUsername(username);
     }
 
+    @Transactional
     public boolean deleteUser(Long id) {
         if (userRepository.existsById(id)) {
             userRepository.deleteById(id);
@@ -48,6 +52,7 @@ public class UserService {
         return false;
     }
 
+    @Transactional
     public Optional<User> updateUser(Long id, String username, String email, String role, String password) {
         Optional<User> userOptional = userRepository.findById(id);
 
@@ -68,5 +73,18 @@ public class UserService {
         }
     }
 
+    // Method to update user score
+    @Transactional
+    public void updateUserScore(Long userId, double scoreChange) {
+        Optional<User> userOptional = userRepository.findById(userId);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            // Handle null score: If current score is null, treat it as 0.0
+            double currentScore = (user.getScore() == null) ? 0.0 : user.getScore();
+            user.setScore(currentScore + scoreChange);
+            userRepository.save(user);
+        }
+        // If user is not found, we might want to log a warning,
+        // but for now, silently fail if user ID is invalid.
     }
-
+}

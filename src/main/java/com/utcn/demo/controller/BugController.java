@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.HashMap; // Import HashMap
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/bugs")
@@ -43,13 +43,21 @@ public class BugController {
         dto.setImage(bug.getImage());
         dto.setStatus(bug.getStatus());
         dto.setCreatedAt(bug.getCreatedAt().toString());
+        dto.setVoteCount(bugService.getVoteCountForBug(bug.getId())); // Fetch and set bug vote count
 
         BugDTO.AuthorDTO authorDTO = new BugDTO.AuthorDTO();
         authorDTO.setId(bug.getAuthor().getId());
         authorDTO.setUsername(bug.getAuthor().getUsername());
+        authorDTO.setScore(bug.getAuthor().getScore()); // Include author's score
         dto.setAuthor(authorDTO);
 
         return ResponseEntity.ok(dto);
+    }
+
+    @GetMapping("/count")
+    public ResponseEntity<Long> getBugCount() {
+        long count = bugService.getBugCount();
+        return ResponseEntity.ok(count);
     }
 
     @PostMapping("/report")
@@ -68,17 +76,16 @@ public class BugController {
     }
 
     @DeleteMapping("/remove/{id}")
-    public ResponseEntity<?> removeBugById(@PathVariable Long id, @RequestParam Long userId) { // Changed return type to <?>
+    public ResponseEntity<?> removeBugById(@PathVariable Long id, @RequestParam Long userId) {
         try {
             bugService.deleteBug(id, userId);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {
-            Map<String, String> responseBody = new HashMap<>(); // Use HashMap
+            Map<String, String> responseBody = new HashMap<>();
             if (e.getMessage() != null && e.getMessage().equals("Only the bug creator can delete their bug")) {
-                responseBody.put("error", e.getMessage()); // Include message for forbidden
+                responseBody.put("error", e.getMessage());
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(responseBody);
             }
-            // Include the actual exception message for bad requests
             responseBody.put("error", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseBody);
         }

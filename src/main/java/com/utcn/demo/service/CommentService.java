@@ -38,6 +38,10 @@ public class CommentService {
                 .collect(Collectors.toList());
     }
 
+    public long getCommentCount() {
+        return commentRepository.count();
+    }
+
     public Comment createComment(Long authorId, Long bugId, String text, String image) {
         User author = userRepository.findById(authorId)
                 .orElseThrow(() -> new RuntimeException("User not found"));

@@ -26,32 +26,23 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Dummy stats for now; replace with real data if available
-  const stats = [
-    { label: 'Bugs Reported', value: 12, icon: <BugReportIcon fontSize="large" color="primary" /> },
-    { label: 'Comments', value: 34, icon: <CommentIcon fontSize="large" color="secondary" /> },
-    { label: 'Votes', value: 56, icon: <ThumbUpIcon fontSize="large" sx={{ color: '#43a047' }} /> },
-  ];
-
   const [bugs, setBugs] = useState<Bug[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [selectedTag, setSelectedTag] = useState<number | ''>('');
-  const [userBugCount, setUserBugCount] = useState<number | null>(null);
-  const [loadingUserBugCount, setLoadingUserBugCount] = useState<boolean>(true);
-  const [userCommentCount, setUserCommentCount] = useState<number | null>(null);
-  const [loadingUserCommentCount, setLoadingUserCommentCount] = useState<boolean>(true);
-  const [userVoteCount, setUserVoteCount] = useState<number | null>(null);
-  const [loadingUserVoteCount, setLoadingUserVoteCount] = useState<boolean>(true);
+  const [bugCount, setBugCount] = useState<number | null>(null);
+  const [loadingBugCount, setLoadingBugCount] = useState<boolean>(true);
+  const [commentCount, setCommentCount] = useState<number | null>(null);
+  const [loadingCommentCount, setLoadingCommentCount] = useState<boolean>(true);
+  const [voteCount, setVoteCount] = useState<number | null>(null);
+  const [loadingVoteCount, setLoadingVoteCount] = useState<boolean>(true);
 
   useEffect(() => {
     fetchBugs();
     fetchTags();
-    if (user) {
-      fetchUserBugCount(user.id);
-      fetchUserCommentCount(user.id);
-      fetchUserVoteCount(user.id);
-    }
-  }, [user]);
+    fetchBugCount();
+    fetchCommentCount();
+    fetchVoteCount();
+  }, []);
 
   const fetchBugs = async () => {
     const res = await fetch('http://localhost:8080/api/bugs/list');
@@ -74,57 +65,57 @@ const Dashboard = () => {
     }
   };
 
-  const fetchUserBugCount = async (userId: string) => {
-    setLoadingUserBugCount(true);
+  const fetchBugCount = async () => {
+    setLoadingBugCount(true);
     try {
-      // Assuming an endpoint /api/user/bugs/count exists that returns { count: number }
-      const res = await fetch(`/api/user/bugs/count?userId=${userId}`);
-      if (!res.ok) throw new Error('Failed to fetch user bug count');
+      const res = await fetch('http://localhost:8080/api/bugs/count');
+      if (!res.ok) throw new Error('Failed to fetch bug count');
       const data = await res.json();
-      setUserBugCount(data.count);
+      setBugCount(typeof data === 'number' ? data : data.count ?? null);
     } catch (err) {
-      console.error("Error fetching user bug count:", err);
-      setUserBugCount(null); // Or set to 0, depending on desired behavior on error
+      setBugCount(null);
     } finally {
-      setLoadingUserBugCount(false);
+      setLoadingBugCount(false);
     }
   };
 
-  const fetchUserCommentCount = async (userId: string) => {
-    setLoadingUserCommentCount(true);
+  const fetchCommentCount = async () => {
+    setLoadingCommentCount(true);
     try {
-      // Assuming an endpoint /api/user/comments/count exists that returns { count: number }
-      const res = await fetch(`/api/user/comments/count?userId=${userId}`);
-      if (!res.ok) throw new Error('Failed to fetch user comment count');
+      const res = await fetch('http://localhost:8080/api/comments/count');
+      if (!res.ok) throw new Error('Failed to fetch comment count');
       const data = await res.json();
-      setUserCommentCount(data.count);
+      setCommentCount(typeof data === 'number' ? data : data.count ?? null);
     } catch (err) {
-      console.error("Error fetching user comment count:", err);
-      setUserCommentCount(null);
+      setCommentCount(null);
     } finally {
-      setLoadingUserCommentCount(false);
+      setLoadingCommentCount(false);
     }
   };
 
-  const fetchUserVoteCount = async (userId: string) => {
-    setLoadingUserVoteCount(true);
+  const fetchVoteCount = async () => {
+    setLoadingVoteCount(true);
     try {
-      // Assuming an endpoint /api/user/votes/count exists that returns { count: number }
-      const res = await fetch(`/api/user/votes/count?userId=${userId}`);
-      if (!res.ok) throw new Error('Failed to fetch user vote count');
+      const res = await fetch('http://localhost:8080/api/votes/count');
+      if (!res.ok) throw new Error('Failed to fetch vote count');
       const data = await res.json();
-      setUserVoteCount(data.count);
+      setVoteCount(typeof data === 'number' ? data : data.count ?? null);
     } catch (err) {
-      console.error("Error fetching user vote count:", err);
-      setUserVoteCount(null);
+      setVoteCount(null);
     } finally {
-      setLoadingUserVoteCount(false);
+      setLoadingVoteCount(false);
     }
   };
 
   const filteredBugs = selectedTag
     ? bugs.filter(bug => Array.isArray(bug.tags) && bug.tags.some(tag => tag.id === selectedTag))
     : bugs;
+
+  const stats = [
+    { label: 'Bugs Reported', value: bugCount, loading: loadingBugCount, icon: <BugReportIcon fontSize="large" color="primary" /> },
+    { label: 'Comments', value: commentCount, loading: loadingCommentCount, icon: <CommentIcon fontSize="large" color="secondary" /> },
+    { label: 'Votes', value: voteCount, loading: loadingVoteCount, icon: <ThumbUpIcon fontSize="large" sx={{ color: '#43a047' }} /> },
+  ];
 
   return (
     <Box sx={{ minHeight: '100vh', width: '100vw', background: 'linear-gradient(135deg, #e3f2fd 0%, #fce4ec 100%)' }}>
@@ -161,32 +152,12 @@ const Dashboard = () => {
                       <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                         {stat.icon}
                         <Typography variant="h5" fontWeight={600}>
-                          {stat.label === 'Bugs Reported' ? (
-                            loadingUserBugCount ? (
-                              <CircularProgress size={20} />
-                            ) : userBugCount !== null ? (
-                              userBugCount
-                            ) : (
-                              '-'
-                            )
-                          ) : stat.label === 'Comments' ? (
-                            loadingUserCommentCount ? (
-                              <CircularProgress size={20} />
-                            ) : userCommentCount !== null ? (
-                              userCommentCount
-                            ) : (
-                              '-'
-                            )
-                          ) : stat.label === 'Votes' ? (
-                            loadingUserVoteCount ? (
-                              <CircularProgress size={20} />
-                            ) : userVoteCount !== null ? (
-                              userVoteCount
-                            ) : (
-                              '-'
-                            )
+                          {stat.loading ? (
+                            <CircularProgress size={20} />
+                          ) : stat.value !== null && stat.value !== undefined ? (
+                            stat.value
                           ) : (
-                            stat.value // Fallback for any other stats
+                            '-'
                           )}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">{stat.label}</Typography>

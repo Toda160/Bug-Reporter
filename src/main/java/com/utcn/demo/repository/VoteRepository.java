@@ -26,4 +26,7 @@ public interface VoteRepository extends JpaRepository<Vote, Long> {
 
      @Transactional
      void deleteByCommentId(Long commentId);
+    // Need methods to retrieve votes by comment IDs and bug ID for score reversal before deletion
+    List<Vote> findByCommentIdIn(List<Long> commentIds);
+    List<Vote> findByBugId(Long bugId);
 }

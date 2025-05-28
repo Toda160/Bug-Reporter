@@ -11,6 +11,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import CommentSection from '../components/CommentSection';
+import { useNavigate } from 'react-router-dom';
 
 interface Bug {
   id: number;
@@ -18,7 +19,7 @@ interface Bug {
   description: string;
   status: string;
   createdAt: string;
-  author: { id: string; username: string };
+  author: { id: string; username: string; score: number };
   image?: string;
   tags: { id: number; name: string }[];
 }
@@ -52,6 +53,7 @@ const AllBugsPage = () => {
   const [editForm, setEditForm] = useState({ title: '', description: '', image: '', status: '' });
   const [editLoading, setEditLoading] = useState(false);
   const [expandedBugId, setExpandedBugId] = useState<number | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchBugs();
@@ -243,7 +245,17 @@ const AllBugsPage = () => {
        >
         {filteredBugs.map((bug) => (
           <Grid item xs={12} sm={6} md={4} key={bug.id}>
-            <Card elevation={4} sx={{ borderRadius: 4, background: 'linear-gradient(120deg, #bbdefb 0%, #f8bbd0 100%)', position: 'relative' }}>
+            <Card
+              elevation={4}
+              sx={{
+                borderRadius: 4,
+                cursor: 'pointer',
+                background: 'linear-gradient(120deg, #bbdefb 0%, #f8bbd0 100%)',
+                transition: 'transform 0.2s',
+                '&:hover': { transform: 'scale(1.03)', boxShadow: 8 }
+              }}
+              onClick={() => navigate(`/bugs/${bug.id}`)}
+            >
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <Avatar sx={{ bgcolor: 'primary.main', mr: 1 }}><BugReportIcon /></Avatar>
@@ -277,7 +289,7 @@ const AllBugsPage = () => {
                   {(bug.tags ?? []).map(tag => <Chip key={tag.id} label={tag.name} size="small" />)}
                 </Box>
                 <Typography variant="caption" color="text.secondary">
-                  Status: {bug.status} | Author: {bug.author?.username}
+                  Status: {bug.status} | Author: {bug.author?.username} (Score: {bug.author?.score?.toFixed(1) || 0})
                 </Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                   Created: {new Date(bug.createdAt).toLocaleString()}

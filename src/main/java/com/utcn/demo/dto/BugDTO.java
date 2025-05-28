@@ -8,18 +8,22 @@ public class BugDTO {
     private String status;
     private String createdAt;
     private AuthorDTO author;
+    private int voteCount; // Added voteCount field
 
     // Getters and setters
 
     public static class AuthorDTO {
         private Long id;
         private String username;
+        private Double score; // Added score field
 
         // Getters and setters
         public Long getId() { return id; }
         public void setId(Long id) { this.id = id; }
         public String getUsername() { return username; }
         public void setUsername(String username) { this.username = username; }
+        public Double getScore() { return score; } // Added getter for score
+        public void setScore(Double score) { this.score = score; } // Added setter for score
     }
 
     public Long getId() { return id; }
@@ -36,4 +40,13 @@ public class BugDTO {
     public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
     public AuthorDTO getAuthor() { return author; }
     public void setAuthor(AuthorDTO author) { this.author = author; }
+
+    // Getter and setter for voteCount
+    public int getVoteCount() {
+        return voteCount;
+    }
+
+    public void setVoteCount(int voteCount) {
+        this.voteCount = voteCount;
+    }
 }

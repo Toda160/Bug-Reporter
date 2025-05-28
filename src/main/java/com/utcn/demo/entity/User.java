@@ -16,7 +16,7 @@ public class User {
     private String email;
     private String password;
     private String role;
-    private Integer score;
+    private Double score;
     private Boolean isBanned;
     private String phone;
 
@@ -60,11 +60,11 @@ public class User {
         this.role = role;
     }
 
-    public Integer getScore() {
+    public Double getScore() {
         return score;
     }
 
-    public void setScore(Integer score) {
+    public void setScore(Double score) {
         this.score = score;
     }
 
