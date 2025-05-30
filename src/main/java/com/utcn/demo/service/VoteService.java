@@ -256,4 +256,25 @@ public class VoteService {
     }
 
 
+    public void deleteVotesForComment(Long commentId) {
+        // Find all votes for the given comment
+        List<Vote> votes = voteRepository.findByCommentId(commentId);
+
+        // Revert scores for each vote before deletion
+        if (!votes.isEmpty()) {
+            for (Vote vote : votes) {
+                // Revert score change for the comment author
+                double scoreToRevertAuthor = calculateCommentVoteScoreChange(vote.getVoteType(), "neutral");
+                userService.updateUserScore(vote.getComment().getAuthor().getId(), scoreToRevertAuthor);
+
+                // Revert voter's score if they downvoted a comment
+                if ("downvote".equalsIgnoreCase(vote.getVoteType()) && !vote.getUser().getId().equals(vote.getComment().getAuthor().getId())) {
+                    userService.updateUserScore(vote.getUser().getId(), 1.5); // Gain back points lost for downvoting
+                }
+            }
+
+            // Delete all votes associated with the comment
+            voteRepository.deleteByCommentId(commentId);
+        }
+    }
 }

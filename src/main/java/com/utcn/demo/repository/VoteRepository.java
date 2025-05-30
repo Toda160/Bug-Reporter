@@ -29,4 +29,6 @@ public interface VoteRepository extends JpaRepository<Vote, Long> {
     // Need methods to retrieve votes by comment IDs and bug ID for score reversal before deletion
     List<Vote> findByCommentIdIn(List<Long> commentIds);
     List<Vote> findByBugId(Long bugId);
+
+    List<Vote> findByCommentId(Long commentId);
 }

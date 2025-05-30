@@ -1,5 +1,7 @@
 package com.utcn.demo.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import org.hibernate.annotations.CreationTimestamp;
 import javax.persistence.*;
 import java.util.Date;
@@ -14,7 +16,8 @@ public class Bug {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "author_id", nullable = false)
+    @JsonIgnoreProperties("bugs")
+    //@JoinColumn(name = "author_id", nullable = false)
     private User author;
 
     private String title;
@@ -27,7 +30,9 @@ public class Bug {
     @CreationTimestamp
     private Date createdAt;
 
-    @OneToMany(mappedBy = "bug", cascade = CascadeType.ALL, orphanRemoval = true)
+   // @OneToMany(mappedBy = "bug", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy="bug")
+    @JsonManagedReference
     private Set<BugTag> bugTags = new HashSet<>();
 
     // New field to track the accepted comment

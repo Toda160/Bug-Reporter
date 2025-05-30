@@ -1,44 +1,44 @@
 package com.utcn.demo.entity;
 
-import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.util.Date;
 
-import java.time.LocalDateTime;
-
 @Entity
+@Table(name = "moderation_actions")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "moderation_actions")
 public class ModerationAction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne
-    @JoinColumn(name = "moderator_id", nullable = false)
-    private User moderator;
+    @Column(name = "moderator_id", nullable = false)
+    private Long moderatorId;
 
-    @Column(nullable = false)
+    @Column(name = "target_user_id")
+    private Long targetUserId;
+
+    @Column(name = "target_bug_id")
+    private Long targetBugId;
+
+    @Column(name = "target_comment_id")
+    private Long targetCommentId;
+
+    @Column(name = "action_type", nullable = false)
     private String actionType;
 
-    @ManyToOne
-    @JoinColumn(name = "target_user_id")
-    private User targetUser;
+    @Column(name = "details")
+    private String details;
 
-    @ManyToOne
-    @JoinColumn(name = "target_bug_id")
-    private Bug targetBug;
-
-    @ManyToOne
-    @JoinColumn(name = "target_comment_id")
-    private Comment targetComment;
-
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "created_at", nullable = false)
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date createdAt;
 }

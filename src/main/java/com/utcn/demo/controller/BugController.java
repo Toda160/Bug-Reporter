@@ -5,17 +5,18 @@ import com.utcn.demo.entity.Bug;
 import com.utcn.demo.service.BugService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
+import com.utcn.demo.entity.User;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.HashMap;
 
-@RestController
-@RequestMapping("/api/bugs")
-public class BugController {
-    private final BugService bugService;
+    @RestController
+    @RequestMapping("/api/bugs")
+    public class BugController {
+        private final BugService bugService;
 
     public BugController(BugService bugService) {
         this.bugService = bugService;
@@ -98,12 +99,22 @@ public class BugController {
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<Bug> updateBug(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
+    public ResponseEntity<?> updateBug(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> payload,
+            @RequestParam Long userId
+    ) {
         try {
-            Bug updatedBug = bugService.updateBug(id, payload);
-            return ResponseEntity.ok(updatedBug);
+            Bug updated = bugService.updateBug(id, userId, payload);
+            return ResponseEntity.ok(updated);
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            Map<String, String> response = new HashMap<>();
+            if (e.getMessage().equals("Only the creator or a moderator can edit this bug")) {
+                response.put("error", e.getMessage());
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 

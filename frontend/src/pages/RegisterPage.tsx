@@ -10,7 +10,10 @@ import {
   Alert,
   Link,
   Avatar,
-  MenuItem
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
@@ -23,16 +26,17 @@ const RegisterPage = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    phone: ''
+    phone: '',
+    role: 'USER'
   });
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState('');
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name as string]: value
     }));
     if (error) clearError();
     if (formError) setFormError('');
@@ -48,7 +52,7 @@ const RegisterPage = () => {
     setLoading(true);
     try {
       const { confirmPassword, ...registerData } = formData;
-      await register({ ...registerData, role: 'USER' });
+      await register(registerData);
       navigate('/login');
     } catch (err) {
       // Error is handled by the auth context
@@ -135,6 +139,24 @@ const RegisterPage = () => {
                 sx={{ borderRadius: 2 }}
               />
             </Grid>
+
+            <Grid item xs={12}>
+              <FormControl fullWidth sx={{ borderRadius: 2 }} disabled={loading}>
+                <InputLabel id="role-label">Role</InputLabel>
+                <Select
+                  labelId="role-label"
+                  id="role"
+                  name="role"
+                  value={formData.role}
+                  label="Role"
+                  onChange={handleChange}
+                >
+                  <MenuItem value="USER">User</MenuItem>
+                  <MenuItem value="MODERATOR">Moderator</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
           </Grid>
           <Button
             type="submit"

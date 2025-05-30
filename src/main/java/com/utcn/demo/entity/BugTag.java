@@ -1,5 +1,6 @@
 package com.utcn.demo.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import org.hibernate.annotations.CreationTimestamp;
 
 import javax.persistence.*;
@@ -19,10 +20,11 @@ public class BugTag {
     private Integer id;
 
     @ManyToOne
-    @JoinColumn(name = "bug_id", nullable = false)
+    @JsonBackReference
+   // @JoinColumn(name = "bug_id", nullable = false)
     private Bug bug;
 
     @ManyToOne
-    @JoinColumn(name = "tag_id", nullable = false)
+   // @JoinColumn(name = "tag_id", nullable = false)
     private Tag tag;
 }

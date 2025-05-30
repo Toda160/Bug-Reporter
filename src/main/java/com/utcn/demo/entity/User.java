@@ -69,7 +69,9 @@ public class User {
     }
 
     public Boolean getBanned() {
-        return isBanned;
+        if (isBanned == null)
+            return false;
+        return true;
     }
 
     public void setBanned(Boolean banned) {
@@ -83,5 +85,6 @@ public class User {
     public void setPhone(String phone) {
         this.phone = phone;
     }
+
 }
 

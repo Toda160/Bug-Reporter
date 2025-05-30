@@ -141,6 +141,8 @@ const CommentSection = ({ bugId, bugStatus, bugAuthorId, currentUserId }: Commen
     setEditDialogOpen(true);
   };
 
+  const isModerator = user?.role === 'MODERATOR';
+
   return (
     <Box sx={{ mt: 4 }}>
       <Typography variant="h6" gutterBottom>
@@ -160,6 +162,7 @@ const CommentSection = ({ bugId, bugStatus, bugAuthorId, currentUserId }: Commen
               onChange={(e) => setNewComment(prev => ({ ...prev, text: e.target.value }))}
               margin="normal"
               required
+              data-testid="comment-input"
             />
             <TextField
               fullWidth
@@ -167,8 +170,9 @@ const CommentSection = ({ bugId, bugStatus, bugAuthorId, currentUserId }: Commen
               value={newComment.image}
               onChange={(e) => setNewComment(prev => ({ ...prev, image: e.target.value }))}
               margin="normal"
+              data-testid="comment-image-input"
             />
-            <Button type="submit" variant="contained" sx={{ mt: 2 }}>
+            <Button type="submit" variant="contained" sx={{ mt: 2 }} data-testid="submit-comment">
               Post Comment
             </Button>
           </form>
@@ -215,8 +219,8 @@ const CommentSection = ({ bugId, bugStatus, bugAuthorId, currentUserId }: Commen
                 {/* Voting UI for comment */}
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
                   <Typography variant="body2">{comment.voteCount ?? 0}</Typography>
-                  <IconButton disabled={!user || user.id === comment.author.id} onClick={() => handleVoteComment(comment.id, 'upvote')}><ThumbUpIcon /></IconButton>
-                  <IconButton disabled={!user || user.id === comment.author.id} onClick={() => handleVoteComment(comment.id, 'downvote')}><ThumbDownIcon /></IconButton>
+                  <IconButton disabled={!user || String(user.id) === String(comment.author.id)} onClick={() => handleVoteComment(comment.id, 'upvote')}><ThumbUpIcon /></IconButton>
+                  <IconButton disabled={!user || String(user.id) === String(comment.author.id)} onClick={() => handleVoteComment(comment.id, 'downvote')}><ThumbDownIcon /></IconButton>
                   {/* Accept button for bug creator */}
                   {user && currentUserId === bugAuthorId && bugStatus !== 'Solved' && !comment.accepted && (
                     <Button size="small" color="success" onClick={() => handleAcceptComment(comment.id)} sx={{ ml: 2 }}>
@@ -226,7 +230,7 @@ const CommentSection = ({ bugId, bugStatus, bugAuthorId, currentUserId }: Commen
                   {comment.accepted && <Typography color="success.main" sx={{ ml: 2 }}>Accepted</Typography>}
                 </Box>
               </Box>
-              {user?.id === comment.author.id && (
+              {(isModerator || user?.id === comment.author.id) && (
                 <Box>
                   <IconButton size="small" onClick={() => openEditDialog(comment)}>
                     <EditIcon />

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -12,10 +12,25 @@ import {
   DialogContent,
   DialogActions,
   Alert,
-  CircularProgress
+  CircularProgress,
+  Select,
+  MenuItem,
+  InputLabel,
+  FormControl
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import { authService } from '../services/api';
+import api from '../services/api';
+
+interface User {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+  avatar?: string;
+  role: string;
+}
 
 const AccountSettings = () => {
   const navigate = useNavigate();
@@ -29,6 +44,27 @@ const AccountSettings = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const [userList, setUserList] = useState<User[]>([]);
+  const [selectedUserToModerateId, setSelectedUserToModerateId] = useState<string | ''>('');
+  const [banReason, setBanReason] = useState('');
+  const [moderationLoading, setModerationLoading] = useState(false);
+  const [moderationError, setModerationError] = useState('');
+  const [moderationSuccess, setModerationSuccess] = useState('');
+
+  useEffect(() => {
+    if (user?.role === 'MODERATOR') {
+      const fetchUsers = async () => {
+        try {
+          const response = await api.get<User[]>('/api/users/list');
+          setUserList(response.data);
+        } catch (err: any) {
+          console.error('Failed to fetch users:', err);
+        }
+      };
+      fetchUsers();
+    }
+  }, [user]);
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -88,6 +124,57 @@ const AccountSettings = () => {
     }
   };
 
+  const handleBanUser = async () => {
+    if (!user?.id || !selectedUserToModerateId || !banReason) {
+      setModerationError('Please select a user and provide a ban reason.');
+      return;
+    }
+
+    setModerationLoading(true);
+    setModerationError('');
+    setModerationSuccess('');
+
+    try {
+      await api.post(
+        `/api/moderation/users/${selectedUserToModerateId}/ban/mods/${user.id}`,
+        banReason,
+        { headers: { 'Content-Type': 'text/plain' } }
+      );
+      const bannedUser = userList.find(u => u.id === selectedUserToModerateId);
+      setModerationSuccess(`User ${bannedUser?.username || 'selected'} banned successfully.`);
+      setSelectedUserToModerateId('');
+      setBanReason('');
+    } catch (err: any) {
+      setModerationError(err.response?.data?.message || 'Failed to ban user.');
+    } finally {
+      setModerationLoading(false);
+    }
+  };
+
+  const handleUnbanUser = async () => {
+    if (!user?.id || !selectedUserToModerateId) {
+      setModerationError('Please select a user.');
+      return;
+    }
+
+    setModerationLoading(true);
+    setModerationError('');
+    setModerationSuccess('');
+
+    try {
+      await api.post(
+        `/api/moderation/users/${selectedUserToModerateId}/unban/mods/${user.id}`
+      );
+      const unbannedUser = userList.find(u => u.id === selectedUserToModerateId);
+      setModerationSuccess(`User ${unbannedUser?.username || 'selected'} unbanned successfully.`);
+      setSelectedUserToModerateId('');
+    } catch (err: any) {
+      setModerationError(err.response?.data?.message || 'Failed to unban user.');
+    } finally {
+      setModerationLoading(false);
+    }
+  };
+
   return (
     <Box sx={{ minHeight: '100vh', minWidth: '100vw', width: '100vw', height: '100vh', background: 'linear-gradient(135deg, #e3f2fd 0%, #fce4ec 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <Paper elevation={3} sx={{ p: 4, width: 500, maxWidth: '95vw' }}>
@@ -104,6 +191,18 @@ const AccountSettings = () => {
         {success && (
           <Alert severity="success" sx={{ mb: 2 }}>
             {success}
+          </Alert>
+        )}
+
+        {moderationError && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {moderationError}
+          </Alert>
+        )}
+
+        {moderationSuccess && (
+          <Alert severity="success" sx={{ mb: 2 }}>
+            {moderationSuccess}
           </Alert>
         )}
 
@@ -152,7 +251,65 @@ const AccountSettings = () => {
           </Button>
         </form>
 
-        <Box sx={{ mt: 4, pt: 3, borderTop: 1, borderColor: 'divider' }}>
+        {user?.role === 'MODERATOR' && (
+          <Box sx={{ mt: 4, pt: 3, borderTop: 1, borderColor: 'divider' }}>
+            <Typography variant="h6" gutterBottom>
+              Moderator Actions
+            </Typography>
+            <FormControl fullWidth margin="normal">
+              <InputLabel id="select-user-to-moderate-label">Select User to Moderate</InputLabel>
+              <Select
+                labelId="select-user-to-moderate-label"
+                id="select-user-to-moderate"
+                value={selectedUserToModerateId}
+                label="Select User to Moderate"
+                onChange={(e) => setSelectedUserToModerateId(e.target.value as string)}
+                disabled={moderationLoading || userList.length === 0}
+              >
+                <MenuItem value="">Select a user</MenuItem>
+                {userList.map((u) => (
+                  <MenuItem key={u.id} value={u.id}>
+                    {u.username} ({u.email})
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {selectedUserToModerateId && (
+              <Box sx={{ mt: 2 }}>
+                <TextField
+                  fullWidth
+                  label="Ban Reason"
+                  value={banReason}
+                  onChange={(e) => setBanReason(e.target.value)}
+                  margin="normal"
+                  disabled={moderationLoading}
+                  multiline
+                  rows={2}
+                />
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={handleBanUser}
+                  disabled={moderationLoading || !banReason || !selectedUserToModerateId}
+                  sx={{ mr: 1 }}
+                >
+                  {moderationLoading ? <CircularProgress size={24} /> : 'Ban User'}
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="success"
+                  onClick={handleUnbanUser}
+                  disabled={moderationLoading || !selectedUserToModerateId}
+                >
+                  {moderationLoading ? <CircularProgress size={24} /> : 'Unban User'}
+                </Button>
+              </Box>
+            )}
+          </Box>
+        )}
+
+        <Box sx={{ mt: user?.role === 'MODERATOR' ? 2 : 4, pt: 3, borderTop: 1, borderColor: 'divider' }}>
           <Typography variant="h6" color="error" gutterBottom>
             Danger Zone
           </Typography>
@@ -179,14 +336,14 @@ const AccountSettings = () => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button 
+          <Button
             onClick={() => setDeleteDialogOpen(false)}
             disabled={loading}
           >
             Cancel
           </Button>
-          <Button 
-            onClick={handleDeleteAccount} 
+          <Button
+            onClick={handleDeleteAccount}
             color="error"
             disabled={loading}
           >

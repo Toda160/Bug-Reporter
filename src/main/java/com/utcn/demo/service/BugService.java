@@ -18,6 +18,9 @@ import com.utcn.demo.entity.BugTag;
 import com.utcn.demo.repository.TagRepository;
 import com.utcn.demo.repository.BugTagRepository; // Import BugTagRepository
 import com.utcn.demo.entity.Tag;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+
 
 @Service
 public class BugService {
@@ -72,35 +75,27 @@ public class BugService {
     }
 
     @Transactional
-    public void deleteBug(Long id, Long userId) {
-        try {
-            Bug bug = bugRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Bug not found with id: " + id));
-
-            // Check if the logged-in user is the author of the bug
-            if (!bug.getAuthor().getId().equals(userId)) {
-                throw new RuntimeException("Only the bug creator can delete their bug");
-            }
-
-            // Delete associated BugTag entries first
-            bugTagRepository.deleteByBugId(id); // Ensure this method exists and works
-
-            // Delete associated votes for the bug and its comments (Crucial: do this BEFORE deleting comments)
-            // This method in VoteService needs to handle deleting votes linked to this bug
-            // AND votes linked to comments under this bug.
-            voteService.deleteVotesForBug(id); // Ensure this method exists and works correctly
-
-            // Delete associated comments next
-            commentRepository.deleteByBugId(id); // Ensure this method exists and works
-
-            // Finally, delete the bug
-            bugRepository.deleteById(id);
-        } catch (RuntimeException e) {
-            // Log the full stack trace on the backend console
-            e.printStackTrace();
-            // Re-throw the exception so the controller can catch and return the 400
-            throw e;
+    public void deleteBug(Long bugId, Long actorUserId) {
+        User actor = userRepository.findById(actorUserId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (actor.getBanned() == true) {
+            throw new RuntimeException("Banned users cannot delete bugs");
         }
+
+        Bug bug = bugRepository.findById(bugId)
+                .orElseThrow(() -> new RuntimeException("Bug not found with id: " + bugId));
+
+        boolean isAuthor    = bug.getAuthor().getId().equals(actorUserId);
+        boolean isModerator = "MODERATOR".equals(actor.getRole());
+        if (!isAuthor && !isModerator) {
+            throw new RuntimeException("Only the creator or a moderator can delete this bug");
+        }
+
+        // same cleanup order as before:
+        bugTagRepository.deleteByBugId(bugId);
+        voteService.deleteVotesForBug(bugId);
+        commentRepository.deleteByBugId(bugId);
+        bugRepository.deleteById(bugId);
     }
 
     public List<Bug> getBugsByUserId(Long userId) {
@@ -109,10 +104,23 @@ public class BugService {
         return bugRepository.findByAuthor(author);
     }
 
-    public Bug updateBug(Long id, Map<String, Object> payload) {
-        Bug bug = bugRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Bug not found with id: " + id));
+    @Transactional
+    public Bug updateBug(Long bugId, Long actorUserId, Map<String,Object> payload) {
+        User actor = userRepository.findById(actorUserId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
+        // 2) Load the bug
+        Bug bug = bugRepository.findById(bugId)
+                .orElseThrow(() -> new RuntimeException("Bug not found with id: " + bugId));
+
+        // 3) Enforce "only author or moderator" rule
+        boolean isAuthor    = bug.getAuthor().getId().equals(actorUserId);
+        boolean isModerator = "MODERATOR".equals(actor.getRole());
+        if (!isAuthor && !isModerator) {
+            throw new RuntimeException("Only the creator or a moderator can edit this bug");
+        }
+
+        // 4) Apply any fields from the payload exactly as before
         if (payload.containsKey("title")) {
             bug.setTitle((String) payload.get("title"));
         }
@@ -123,17 +131,18 @@ public class BugService {
             bug.setImage((String) payload.get("image"));
         }
         if (payload.containsKey("status")) {
-            String status = (String) payload.get("status");
-            if (status != null && !status.isEmpty()) {
-                if ("Solved".equals(status) && commentService.getCommentsByBugId(id).isEmpty()) {
-                    throw new RuntimeException("Cannot mark bug as solved without comments");
-                }
-                bug.setStatus(status);
+            String newStatus = (String) payload.get("status");
+            // preserve your "can't mark Solved without comments" rule
+            if ("Solved".equals(newStatus)
+                    && commentService.getCommentsByBugId(bugId).isEmpty()) {
+                throw new RuntimeException("Cannot mark bug as solved without comments");
             }
+            bug.setStatus(newStatus);
         }
 
         return bugRepository.save(bug);
     }
+
 
     @Transactional
     public Bug acceptComment(Long bugId, Long commentId, Long userId) {

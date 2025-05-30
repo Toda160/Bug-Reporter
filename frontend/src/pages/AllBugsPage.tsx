@@ -21,7 +21,7 @@ interface Bug {
   createdAt: string;
   author: { id: string; username: string; score: number };
   image?: string;
-  tags: { id: number; name: string }[];
+  bugTags: { id: number; tag: { id: number; name: string } }[];
 }
 
 interface Tag {
@@ -191,10 +191,10 @@ const AllBugsPage = () => {
   // Filtering logic
   const filteredBugs = bugs
     .filter(bug =>
-      (!search || bug.title.toLowerCase().includes(search.toLowerCase())) &&
-      (!authorSearch || bug.author.username.toLowerCase().includes(authorSearch.toLowerCase())) &&
-      (!showMine || bug.author.id === user?.id) &&
-      (!selectedTag || (Array.isArray(bug.tags) && bug.tags.some(tag => String(tag.id) === String(selectedTag))))
+      (!search || (bug.title && bug.title.toLowerCase().includes(search.toLowerCase()))) &&
+      (!authorSearch || (bug.author && bug.author.username && bug.author.username.toLowerCase().includes(authorSearch.toLowerCase()))) &&
+      (!showMine || (user && bug.author && String(bug.author.id) === String(user.id))) &&
+      (!selectedTag || (Array.isArray(bug.bugTags) && bug.bugTags.some(bugTag => bugTag && bugTag.tag && String(bugTag.tag.id) === String(selectedTag))))
     )
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
@@ -286,7 +286,11 @@ const AllBugsPage = () => {
 )}
 
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
-                  {(bug.tags ?? []).map(tag => <Chip key={tag.id} label={tag.name} size="small" />)}
+                  {(bug.bugTags ?? []).map(bugTag => (
+                    bugTag && bugTag.tag ? (
+                      <Chip key={bugTag.id} label={bugTag.tag.name} size="small" />
+                    ) : null
+                  ))}
                 </Box>
                 <Typography variant="caption" color="text.secondary">
                   Status: {bug.status} | Author: {bug.author?.username} (Score: {bug.author?.score?.toFixed(1) || 0})

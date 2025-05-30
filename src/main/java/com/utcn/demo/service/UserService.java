@@ -2,6 +2,8 @@ package com.utcn.demo.service;
 
 import com.utcn.demo.entity.User;
 import com.utcn.demo.repository.UserRepository;
+import com.utcn.demo.service.EmailService;
+import com.utcn.demo.service.SmsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,10 +15,18 @@ import java.util.Optional;
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService     emailService;
+    private final SmsService       smsService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
+
+    public UserService(UserRepository userRepository,
+                       PasswordEncoder passwordEncoder,
+                       EmailService emailService,
+                       SmsService smsService) {
+        this.userRepository  = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.emailService    = emailService;
+        this.smsService      = smsService;
     }
 
     public List<User> getAllUsers() {
@@ -34,7 +44,6 @@ public class UserService {
 
         return userRepository.save(newUser);
     }
-
     public Optional<User> getUserById(Long id) {
         return userRepository.findById(id);
     }
@@ -42,6 +51,16 @@ public class UserService {
     public Optional<User> getUserByUsername(String username) {
         return userRepository.findByUsername(username);
     }
+
+/*
+    public Optional<User> getNonBannedUserByUsername(String username) {
+        return userRepository.findByUsernameAndIsBannedFalse(username);
+    }
+
+   // public Optional<User> getUserById(Long id) {
+    //    return userRepository.findByIdAndIsBannedFalse(id);
+    }
+  */
 
     @Transactional
     public boolean deleteUser(Long id) {
@@ -86,5 +105,57 @@ public class UserService {
         }
         // If user is not found, we might want to log a warning,
         // but for now, silently fail if user ID is invalid.
+    }
+
+    //------------------bonus
+
+    @Transactional
+    public void banUser(Long userId, String reason) {
+        User u = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("No user with id " + userId));
+
+        if (u.getBanned() == false) {
+            u.setBanned(true);
+            userRepository.save(u);
+
+            // send notifications
+            emailService.send(
+                    u.getEmail(),
+                    "You have been banned",
+                    "You were banned for the following reason:\n" + reason
+            );
+            smsService.send(
+                    u.getPhone(),
+                    "Your account has been banned. Reason: " + reason
+            );
+        }
+    }
+
+    /**
+     * Un‐ban a previously banned user, and notify them by email & SMS.
+     */
+    @Transactional
+    public void unbanUser(Long userId) {
+        User u = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("No user with id " + userId));
+
+        if (u.getBanned() == true) {
+            u.setBanned(false);
+            userRepository.save(u);
+
+            emailService.send(
+                    u.getEmail(),
+                    "Your account has been un-banned",
+                    "A moderator has un-banned your account. You may now log in again."
+            );
+            smsService.send(
+                    u.getPhone(),
+                    "Your ban has been lifted. Welcome back!"
+            );
+        }
+    }
+
+    public Optional<Object> getUserByEmail(String email) {
+        return userRepository.findByEmail(email);
     }
 }

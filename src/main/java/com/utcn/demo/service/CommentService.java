@@ -69,12 +69,23 @@ public class CommentService {
         return savedComment;
     }
 
-    public Comment updateComment(Long id, Long authorId, Map<String, Object> payload) {
-        Comment comment = commentRepository.findById(id)
+    public Comment updateComment(Long commentId,
+                                 Long actorUserId,
+                                 Map<String,Object> payload) {
+        User actor = userRepository.findById(actorUserId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (actor.getBanned() == true) {
+            throw new RuntimeException("Banned users cannot edit comments");
+        }
+
+        Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("Comment not found"));
 
-        if (!comment.getAuthor().getId().equals(authorId)) {
-            throw new RuntimeException("Only the author can update their comment");
+        // allow if author _or_ moderator
+        boolean isAuthor    = comment.getAuthor().getId().equals(actorUserId);
+        boolean isModerator = "MODERATOR".equals(actor.getRole());
+        if (!isAuthor && !isModerator) {
+            throw new RuntimeException("Not allowed to edit this comment");
         }
 
         if (payload.containsKey("text")) {
@@ -84,18 +95,29 @@ public class CommentService {
             comment.setImage((String) payload.get("image"));
         }
 
-        Comment updatedComment = commentRepository.save(comment);
-        updatedComment.setVoteCount(voteService.getVoteCountForComment(updatedComment.getId()));
-        return updatedComment;
+        Comment updated = commentRepository.save(comment);
+        updated.setVoteCount(voteService.getVoteCountForComment(updated.getId()));
+        return updated;
     }
 
-    public void deleteComment(Long id, Long authorId) {
-        Comment comment = commentRepository.findById(id)
+    public void deleteComment(Long commentId, Long actorUserId) {
+        User actor = userRepository.findById(actorUserId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (actor.getBanned() == true) {
+            throw new RuntimeException("Banned users cannot delete comments");
+        }
+
+        Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("Comment not found"));
 
-        if (!comment.getAuthor().getId().equals(authorId)) {
-            throw new RuntimeException("Only the author can delete their comment");
+        boolean isAuthor    = comment.getAuthor().getId().equals(actorUserId);
+        boolean isModerator = "MODERATOR".equals(actor.getRole());
+        if (!isAuthor && !isModerator) {
+            throw new RuntimeException("Not allowed to delete this comment");
         }
+
+        // Delete associated votes first to avoid foreign key constraints
+        voteService.deleteVotesForComment(commentId);
 
         commentRepository.delete(comment);
     }
